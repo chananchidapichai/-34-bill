@@ -14,35 +14,35 @@ int main()
         return 1;
     }
 
-    int bill_no;
-    char customer_name;
-    double amount;
-    char date[20];
+    char ReceiptID[10];
+    char CustomerName[50];
+    int Amount;
+    char Date[20];
 
-    printf("Please enter bill number : ");
-    scanf("%d", &bill_no);
+    printf("Please enter receipt ID number : ");
+    scanf("%9s", &ReceiptID);
     getchar();
 
     printf("Please enter name : ");
-    fgets(customer_name, sizeof(customer_name), stdin);
-    size_t len = strlen(customer_name);
-    if(len > 0 && customer_name[len - 1] == '\n')
+    fgets(CustomerName, sizeof(CustomerName), stdin);
+    size_t len = strlen(CustomerName);
+    if(len > 0 && CustomerName[len - 1] == '\n')
     {
-        customer_name[len - 1] = '\0';
+        CustomerName[len - 1] = '\0';
     }
     printf("Please enter price amount : ");
-    scanf("%lf", &amount);
+    scanf("%d", &Amount);
     getchar();
 
-    printf("Please enter date (dd/mm/yyyy) : ");
-    fgets(date, sizeof(date), stdin);
-    len = strlen(date);
-    if(len > 0 && date[len - 1] == '\n')
+    printf("Please enter date (yyyy-mm-dd) : ");
+    fgets(Date, sizeof(Date), stdin);
+    len = strlen(Date);
+    if(len > 0 && Date[len - 1] == '\n')
     {
-        date[len - 1] = '\0';
+        Date[len - 1] = '\0';
     }
 
-    fprintf(fp, "%d, %s, %.2f, %s\n", bill_no, customer_name, amount, date);
+    fprintf(fp, "%s, %s, %d, %s\n", ReceiptID, CustomerName, Amount, Date);
     printf("Data saved successfully to %s\n", bill);
     fclose(fp);
 
