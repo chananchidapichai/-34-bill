@@ -1,3 +1,16 @@
 ReceiptID, CostomerName, Amount, Date
 R001, John Doe, 2500, 2025-08-01
 R002, Jane Smith, 3200, 2025-08-03
+R003, Tom Odin, 1400, 2025-08-06
+R004, Rose Marry, 4520, 2025-08-11
+R005, Harry Malt, 3150, 2025-08-12
+R006, Griffit Park, 5600, 2025-08-18
+R007, Orion Yu, 1200, 2025-08-22
+R008, Dylan Pual, 3100, 2025-08-26
+R009, Richard Dison, 4250, 2025-08-31
+R010, Peter Rabbit, 3620, 2025-09-02
+R011, Gorge Aloha, 5480, 2025-09-06
+R012, Queen Ston, 2100, 2025-09-12
+R013, Potato Banana, 1400, 2025-09-13
+R014, Elie Elle, 4050, 2025-09-15
+R015, Utoda Cross, 3125, 2025-09-16
