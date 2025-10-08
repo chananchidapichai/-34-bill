@@ -14,7 +14,6 @@ typedef struct {
     char Date[20];
 } Bill;
 
-// ฟังก์ชันช่วยแปลงสตริงเป็นตัวพิมพ์เล็ก
 void toLowerStr(char *str) {
     for (int i = 0; str[i]; i++)
         str[i] = tolower((unsigned char)str[i]);
@@ -175,7 +174,7 @@ void searchBill() {
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
 
-    toLowerStr(keyword); // แปลง keyword เป็นพิมพ์เล็ก
+    toLowerStr(keyword);
 
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
@@ -219,27 +218,50 @@ void updateBill() {
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\nCurrent bill :\n");
-            printf("%s | %s | %d | %s\n",
-                   bills[i].ReceiptID, bills[i].CustomerName,
-                   bills[i].Amount, bills[i].Date);
+            found = 1;
+            char choice;
 
-            printf("\nEnter new Customer Name : ");
-            fgets(bills[i].CustomerName, sizeof(bills[i].CustomerName), stdin);
-            bills[i].CustomerName[strcspn(bills[i].CustomerName, "\n")] = 0;
-
-            printf("Enter new Amount : ");
-            scanf("%d", &bills[i].Amount);
-            getchar();
-
-            char tempDate[20];
             do {
-                printf("Enter new Date (yyyy-mm-dd): ");
-                scanf("%19s", tempDate);
+                printf("\nCurrent bill:\n");
+                printf("%s | %s | %d | %s\n",
+                       bills[i].ReceiptID, bills[i].CustomerName,
+                       bills[i].Amount, bills[i].Date);
+
+                printf("\nWhat do you want to update?\n");
+                printf("a) Customer Name\n");
+                printf("b) Amount\n");
+                printf("c) Date\n");
+                printf("x) Finish updating\n");
+                printf("Enter choice: ");
+                scanf(" %c", &choice);
                 getchar();
-                if (!validateAndFormatDate(tempDate, bills[i].Date))
-                    printf("Error: Invalid or future date. Please try again.\n");
-            } while (!validateAndFormatDate(tempDate, bills[i].Date));
+
+                if (choice == 'a' || choice == 'A') {
+                    printf("\nEnter new Customer Name : ");
+                    fgets(bills[i].CustomerName, sizeof(bills[i].CustomerName), stdin);
+                    bills[i].CustomerName[strcspn(bills[i].CustomerName, "\n")] = 0;
+                    printf("Customer Name updated.\n");
+                } else if (choice == 'b' || choice == 'B') {
+                    printf("\nEnter new Amount : ");
+                    scanf("%d", &bills[i].Amount);
+                    getchar();
+                    printf("Amount updated.\n");
+                } else if (choice == 'c' || choice == 'C') {
+                    char tempDate[20];
+                    do {
+                        printf("\nEnter new Date (yyyy-mm-dd): ");
+                        scanf("%19s", tempDate);
+                        getchar();
+                        if (!validateAndFormatDate(tempDate, bills[i].Date))
+                            printf("Error: Invalid or future date. Please try again.\n");
+                    } while (!validateAndFormatDate(tempDate, bills[i].Date));
+                    printf("Date updated.\n");
+                } else if (choice == 'x' || choice == 'X') {
+                    break;
+                } else {
+                    printf("Invalid choice.\n");
+                }
+            } while (1);
 
             char confirm;
             printf("\nAre you sure you want to save these changes? (y/n): ");
@@ -253,7 +275,6 @@ void updateBill() {
                 printf("Update canceled.\n");
             }
 
-            found = 1;
             break;
         }
     }
