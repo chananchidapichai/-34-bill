@@ -258,6 +258,70 @@ void runUnitTests() {
     rename("temp.csv", oldFile);
 }
 
+void runEndToEndTest() {
+    printf("\n===== END-TO-END TEST START =====\n");
+
+    char oldFile[] = FILE_NAME;
+    rename(FILE_NAME, "temp.csv");
+    FILE *fp = fopen(FILE_NAME, "w"); fclose(fp);
+
+    printf("\n[TEST] Add Bills\n");
+    Bill test1 = {"T001", "Test User1", 123.45, "2022-05-01"};
+    Bill test2 = {"T002", "Test User2", 678.90, "2023-06-15"};
+    fp = fopen(FILE_NAME, "a");
+    fprintf(fp, "%s,%s,%.2f,%s\n", test1.ReceiptID, test1.CustomerName, test1.Amount, test1.Date);
+    fprintf(fp, "%s,%s,%.2f,%s\n", test2.ReceiptID, test2.CustomerName, test2.Amount, test2.Date);
+    fclose(fp);
+
+    Bill bills[MAX_BILLS];
+    int count = readAllBills(bills, MAX_BILLS);
+    printf(count == 2 ? "PASS: Added 2 bills\n" : "FAIL: Add bills\n");
+
+    printf("\n[TEST] Search Bill\n");
+    if (receiptExists("T001")) printf("PASS: Bill T001 exists\n");
+    else printf("FAIL: Bill T001 missing\n");
+
+    printf("\n[TEST] Update Bill\n");
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "T002") == 0) {
+            strcpy(bills[i].CustomerName, "Test User2 Updated");
+            bills[i].Amount = 999.99;
+            strcpy(bills[i].Date, "2024-01-01");
+            break;
+        }
+    }
+    writeAllBills(bills, count);
+
+    readAllBills(bills, MAX_BILLS);
+    if (strcmp(bills[1].CustomerName, "Test User2 Updated") == 0 &&
+        bills[1].Amount == 999.99) {
+        printf("PASS: Update bill successful\n");
+    } else {
+        printf("FAIL: Update bill failed\n");
+    }
+
+    printf("\n[TEST] Delete Bill\n");
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "T001") == 0) {
+            for (int j = i; j < count - 1; j++) bills[j] = bills[j+1];
+            count--;
+            break;
+        }
+    }
+    writeAllBills(bills, count);
+    count = readAllBills(bills, MAX_BILLS);
+    if (count == 1 && !receiptExists("T001")) {
+        printf("PASS: Delete bill successful\n");
+    } else {
+        printf("FAIL: Delete bill failed\n");
+    }
+
+    printf("\n===== END-TO-END TEST END =====\n");
+
+    remove(FILE_NAME);
+    rename("temp.csv", oldFile);
+}
+
 void displayMenu() {
     ensureFileExists();
     int choice;
@@ -273,6 +337,7 @@ void displayMenu() {
         printf("  4.  UPDATE BILL\n");
         printf("  5.  DELETE BILL\n");
         printf("  6.  UNIT TEST\n");
+        printf("  7.  END-TO-END TEST\n");
         printf("                                                0 -->  EXIT\n");
         printf("______________________________________________________________\n\n");
         printf("What do you want to do?\n");
@@ -287,6 +352,7 @@ void displayMenu() {
             case 4: updateBill(); break;
             case 5: deleteBill(); break;
             case 6: runUnitTests(); break;
+            case 7: runEndToEndTest(); break;
             case 0: printf("Exiting program.\n"); break;
             default: printf("Invalid choice. Try again.\n");
         }
@@ -297,4 +363,3 @@ int main() {
     displayMenu();
     return 0;
 }
-
