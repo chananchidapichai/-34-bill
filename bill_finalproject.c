@@ -27,7 +27,6 @@ void ensureFileExists() {
             printf("Error: Cannot create file %s\n", FILE_NAME);
             exit(1);
         }
-        printf("Created new file: %s\n", FILE_NAME);
         fclose(fp);
     } else {
         fclose(fp);
@@ -287,24 +286,11 @@ void updateBill() {
                     printf("Error: Invalid or future date. Please try again.\n");
             } while (!validateAndFormatDate(tempDate, bills[found].Date));
             printf("Date updated.\n");
-        } else if (choice == 'x' || choice == 'X') {
-            break;
-        } else {
-            printf("Invalid choice.\n");
         }
-    } while (1);
+    } while (choice != 'x' && choice != 'X');
 
-    char confirm;
-    printf("\nAre you sure you want to save these changes? (y/n): ");
-    scanf(" %c", &confirm);
-    getchar();
-
-    if (confirm == 'y' || confirm == 'Y') {
-        writeAllBills(bills, count);
-        printf("Bill updated successfully.\n");
-    } else {
-        printf("Update canceled.\n");
-    }
+    writeAllBills(bills, count);
+    printf("Bill updated successfully.\n");
 }
 
 void deleteBill() {
@@ -313,40 +299,68 @@ void deleteBill() {
     scanf("%9s", id);
     getchar();
 
+    id[0] = toupper((unsigned char)id[0]);
+    if (!isValidReceiptID(id)) {
+        printf("Error: Invalid Receipt ID format.\n");
+        return;
+    }
+
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
-    int found = 0;
+    int found = -1;
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\nBill found:\n");
-            printf("%s | %s | %d | %s\n",
-                   bills[i].ReceiptID, bills[i].CustomerName,
-                   bills[i].Amount, bills[i].Date);
-
-            char confirm;
-            printf("\nAre you sure you want to delete this bill? (y/n): ");
-            scanf(" %c", &confirm);
-            getchar();
-
-            if (confirm == 'y' || confirm == 'Y') {
-                for (int j = i; j < count - 1; j++)
-                    bills[j] = bills[j + 1];
-                count--;
-                writeAllBills(bills, count);
-                printf("Bill deleted successfully.\n");
-            } else {
-                printf("Deletion canceled.\n");
-            }
-
-            found = 1;
+            found = i;
             break;
         }
     }
 
-    if (!found) {
+    if (found == -1) {
         printf("Receipt ID not found.\n");
+        return;
     }
+
+    for (int i = found; i < count - 1; i++) {
+        bills[i] = bills[i + 1];
+    }
+    count--;
+
+    writeAllBills(bills, count);
+    printf("Bill deleted successfully.\n");
+}
+
+void runUnitTests() {
+    printf("\n===== UNIT TEST START =====\n");
+
+    printf("\nTest addBill with invalid ReceiptID:\n");
+    char oldFile[] = FILE_NAME;
+    rename(FILE_NAME, "temp.csv"); 
+    FILE *fp = fopen(FILE_NAME, "w");
+    fclose(fp);
+
+    printf("Adding invalid receipt 'A12' (should fail)...\n");
+    if (!isValidReceiptID("A12"))
+        printf("PASS: Invalid ReceiptID detected.\n");
+    else
+        printf("FAIL: Invalid ReceiptID not detected.\n");
+
+    printf("\nTest validateAndFormatDate:\n");
+    char dateFormatted[20];
+    if (!validateAndFormatDate("3000-01-01", dateFormatted))
+        printf("PASS: Future date rejected.\n");
+    else
+        printf("FAIL: Future date accepted.\n");
+
+    if (validateAndFormatDate("2020-02-29", dateFormatted))
+        printf("PASS: Leap year date accepted.\n");
+    else
+        printf("FAIL: Leap year date rejected.\n");
+
+    printf("\n===== UNIT TEST END =====\n");
+
+    remove(FILE_NAME);
+    rename("temp.csv", oldFile);
 }
 
 void displayMenu() {
@@ -363,6 +377,7 @@ void displayMenu() {
         printf("  3.  SEARCH BILL\n");
         printf("  4.  UPDATE BILL\n");
         printf("  5.  DELETE BILL\n");
+        printf("  6.  UNIT TEST\n");
         printf("                                                0 -->  EXIT\n");
         printf("______________________________________________________________\n\n");
         printf("What do you want to do?\n");
@@ -376,14 +391,14 @@ void displayMenu() {
             case 3: searchBill(); break;
             case 4: updateBill(); break;
             case 5: deleteBill(); break;
+            case 6: runUnitTests(); break;
             case 0: printf("Exiting program.\n"); break;
             default: printf("Invalid choice. Try again.\n");
         }
     } while(choice != 0);
 }
 
-int main(void) {
-    ensureFileExists();
+int main() {
     displayMenu();
     return 0;
 }
