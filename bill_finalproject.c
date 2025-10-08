@@ -70,6 +70,14 @@ int receiptExists(const char *id) {
     return 0;
 }
 
+int isValidReceiptID(const char *id) {
+    if (strlen(id) != 4) return 0;
+    if (!isalpha(id[0])) return 0;
+    for (int i = 1; i < 4; i++)
+        if (!isdigit(id[i])) return 0;
+    return 1;
+}
+
 int validateAndFormatDate(const char *inputStr, char *formattedDate) {
     int y, m, d;
     if (sscanf(inputStr, "%d-%d-%d", &y, &m, &d) != 3)
@@ -116,9 +124,18 @@ void addBill() {
     int duplicate;
     do {
         duplicate = 0;
-        printf("\nEnter Receipt ID : ");
+        printf("\nEnter Receipt ID (1 letter + 3 digits): ");
         scanf("%9s", b.ReceiptID);
         getchar();
+
+        b.ReceiptID[0] = toupper((unsigned char)b.ReceiptID[0]);
+
+        if (!isValidReceiptID(b.ReceiptID)) {
+            printf("Error: Invalid format. Must be 1 letter followed by 3 digits.\n");
+            duplicate = 1;
+            continue;
+        }
+
         if (receiptExists(b.ReceiptID)) {
             printf("Error: Receipt ID already exists.\n");
             duplicate = 1;
@@ -212,81 +229,87 @@ void updateBill() {
     scanf("%9s", id);
     getchar();
 
+    id[0] = toupper((unsigned char)id[0]);
+    if (!isValidReceiptID(id)) {
+        printf("Error: Invalid Receipt ID format.\n");
+        return;
+    }
+
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
-    int found = 0;
+    int found = -1;
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            found = 1;
-            char choice;
-
-            do {
-                printf("\nCurrent bill:\n");
-                printf("%s | %s | %d | %s\n",
-                       bills[i].ReceiptID, bills[i].CustomerName,
-                       bills[i].Amount, bills[i].Date);
-
-                printf("\nWhat do you want to update?\n");
-                printf("a) Customer Name\n");
-                printf("b) Amount\n");
-                printf("c) Date\n");
-                printf("x) Finish updating\n");
-                printf("Enter choice: ");
-                scanf(" %c", &choice);
-                getchar();
-
-                if (choice == 'a' || choice == 'A') {
-                    printf("\nEnter new Customer Name : ");
-                    fgets(bills[i].CustomerName, sizeof(bills[i].CustomerName), stdin);
-                    bills[i].CustomerName[strcspn(bills[i].CustomerName, "\n")] = 0;
-                    printf("Customer Name updated.\n");
-                } else if (choice == 'b' || choice == 'B') {
-                    printf("\nEnter new Amount : ");
-                    scanf("%d", &bills[i].Amount);
-                    getchar();
-                    printf("Amount updated.\n");
-                } else if (choice == 'c' || choice == 'C') {
-                    char tempDate[20];
-                    do {
-                        printf("\nEnter new Date (yyyy-mm-dd): ");
-                        scanf("%19s", tempDate);
-                        getchar();
-                        if (!validateAndFormatDate(tempDate, bills[i].Date))
-                            printf("Error: Invalid or future date. Please try again.\n");
-                    } while (!validateAndFormatDate(tempDate, bills[i].Date));
-                    printf("Date updated.\n");
-                } else if (choice == 'x' || choice == 'X') {
-                    break;
-                } else {
-                    printf("Invalid choice.\n");
-                }
-            } while (1);
-
-            char confirm;
-            printf("\nAre you sure you want to save these changes? (y/n): ");
-            scanf(" %c", &confirm);
-            getchar();
-
-            if (confirm == 'y' || confirm == 'Y') {
-                writeAllBills(bills, count);
-                printf("Bill updated successfully.\n");
-            } else {
-                printf("Update canceled.\n");
-            }
-
+            found = i;
             break;
         }
     }
 
-    if (!found) {
+    if (found == -1) {
         printf("Receipt ID not found.\n");
+        return;
+    }
+
+    char choice;
+    do {
+        printf("\nCurrent bill:\n");
+        printf("%s | %s | %d | %s\n",
+               bills[found].ReceiptID, bills[found].CustomerName,
+               bills[found].Amount, bills[found].Date);
+
+        printf("\nWhat do you want to update?\n");
+        printf("a) Customer Name\n");
+        printf("b) Amount\n");
+        printf("c) Date\n");
+        printf("x) Finish updating\n");
+        printf("Enter choice: ");
+        scanf(" %c", &choice);
+        getchar();
+
+        if (choice == 'a' || choice == 'A') {
+            printf("\nEnter new Customer Name : ");
+            fgets(bills[found].CustomerName, sizeof(bills[found].CustomerName), stdin);
+            bills[found].CustomerName[strcspn(bills[found].CustomerName, "\n")] = 0;
+            printf("Customer Name updated.\n");
+        } else if (choice == 'b' || choice == 'B') {
+            printf("\nEnter new Amount : ");
+            scanf("%d", &bills[found].Amount);
+            getchar();
+            printf("Amount updated.\n");
+        } else if (choice == 'c' || choice == 'C') {
+            char tempDate[20];
+            do {
+                printf("\nEnter new Date (yyyy-mm-dd): ");
+                scanf("%19s", tempDate);
+                getchar();
+                if (!validateAndFormatDate(tempDate, bills[found].Date))
+                    printf("Error: Invalid or future date. Please try again.\n");
+            } while (!validateAndFormatDate(tempDate, bills[found].Date));
+            printf("Date updated.\n");
+        } else if (choice == 'x' || choice == 'X') {
+            break;
+        } else {
+            printf("Invalid choice.\n");
+        }
+    } while (1);
+
+    char confirm;
+    printf("\nAre you sure you want to save these changes? (y/n): ");
+    scanf(" %c", &confirm);
+    getchar();
+
+    if (confirm == 'y' || confirm == 'Y') {
+        writeAllBills(bills, count);
+        printf("Bill updated successfully.\n");
+    } else {
+        printf("Update canceled.\n");
     }
 }
 
 void deleteBill() {
     char id[10];
-    printf("Enter Receipt ID to delete: ");
+    printf("\nEnter Receipt ID to delete : ");
     scanf("%9s", id);
     getchar();
 
