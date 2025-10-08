@@ -74,7 +74,7 @@ void runEndToEndTest() {
     printf("\n===== END-TO-END TEST START =====\n");
 
     char oldFile[] = FILE_NAME;
-    rename(FILE_NAME, "temp.csv"); // สำรองไฟล์ของจริง
+    rename(FILE_NAME, "temp.csv");
     FILE *fp = fopen(FILE_NAME, "w"); fclose(fp);
 
     printf("\n[TEST] Add Bills\n");
@@ -90,8 +90,8 @@ void runEndToEndTest() {
     printf(count == 2 ? "PASS: Added 2 bills\n" : "FAIL: Add bills\n");
 
     printf("\n[TEST] Search Bill\n");
-    if (receiptExists("T001")) printf("PASS: Bill T001 exists\n");
-    else printf("FAIL: Bill T001 missing\n");
+    printf(receiptExists("T001") ? "PASS: Bill T001 exists\n" : "FAIL: Bill T001 missing\n");
+    printf(!receiptExists("ZZZ") ? "PASS: Non-existent bill check\n" : "FAIL: Non-existent bill found\n");
 
     printf("\n[TEST] Update Bill\n");
     for (int i = 0; i < count; i++) {
@@ -105,12 +105,8 @@ void runEndToEndTest() {
     writeAllBills(bills, count);
 
     readAllBills(bills, MAX_BILLS);
-    if (strcmp(bills[1].CustomerName, "Test User2 Updated") == 0 &&
-        bills[1].Amount == 999.99) {
-        printf("PASS: Update bill successful\n");
-    } else {
-        printf("FAIL: Update bill failed\n");
-    }
+    printf(strcmp(bills[1].CustomerName, "Test User2 Updated") == 0 &&
+           bills[1].Amount == 999.99 ? "PASS: Update bill successful\n" : "FAIL: Update bill failed\n");
 
     printf("\n[TEST] Delete Bill\n");
     for (int i = 0; i < count; i++) {
@@ -122,16 +118,16 @@ void runEndToEndTest() {
     }
     writeAllBills(bills, count);
     count = readAllBills(bills, MAX_BILLS);
-    if (count == 1 && !receiptExists("T001")) {
-        printf("PASS: Delete bill successful\n");
-    } else {
-        printf("FAIL: Delete bill failed\n");
-    }
+    printf(count == 1 && !receiptExists("T001") ? "PASS: Delete bill successful\n" : "FAIL: Delete bill failed\n");
+
+    printf("\n[TEST] Edge Cases\n");
+    printf(!validateAndFormatDate("2025-00-00", NULL) ? "PASS: Invalid date edge case\n" : "FAIL: Invalid date edge case\n");
+    printf(!isValidReceiptID("") ? "PASS: Empty ReceiptID edge case\n" : "FAIL: Empty ReceiptID edge case\n");
 
     printf("\n===== END-TO-END TEST END =====\n");
 
     remove(FILE_NAME);
-    rename("temp.csv", oldFile); // คืนไฟล์เดิม
+    rename("temp.csv", oldFile);
 }
 
 int main() {
