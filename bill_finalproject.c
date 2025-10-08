@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 #define FILE_NAME "bill.csv"
 #define MAX_BILLS 1000
@@ -12,6 +13,12 @@ typedef struct {
     int Amount;
     char Date[20];
 } Bill;
+
+// ฟังก์ชันช่วยแปลงสตริงเป็นตัวพิมพ์เล็ก
+void toLowerStr(char *str) {
+    for (int i = 0; str[i]; i++)
+        str[i] = tolower((unsigned char)str[i]);
+}
 
 void ensureFileExists() {
     FILE *fp = fopen(FILE_NAME, "r");
@@ -168,24 +175,41 @@ void searchBill() {
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
 
+    toLowerStr(keyword); // แปลง keyword เป็นพิมพ์เล็ก
+
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
     int found = 0;
 
+    printf("\nSearch results:\n");
+    printf("+------------+-------------------------+---------+------------+\n");
+    printf("| Receipt ID | Customer Name           | Amount  | Date       |\n");
+    printf("+------------+-------------------------+---------+------------+\n");
+
     for (int i = 0; i < count; i++) {
-        if (strstr(bills[i].ReceiptID, keyword) || strstr(bills[i].CustomerName, keyword)) {
-            printf("\n%s | %s | %d | %s\n",
+        char receiptLower[10], nameLower[50];
+        strcpy(receiptLower, bills[i].ReceiptID);
+        strcpy(nameLower, bills[i].CustomerName);
+        toLowerStr(receiptLower);
+        toLowerStr(nameLower);
+
+        if (strstr(receiptLower, keyword) || strstr(nameLower, keyword)) {
+            printf("| %-10s | %-23s | %7d | %-10s |\n",
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
             found = 1;
         }
     }
-    if (!found) printf("No matching bill found.\n");
+
+    printf("+------------+-------------------------+---------+------------+\n");
+
+    if (!found)
+        printf("No matching bill found.\n");
 }
 
 void updateBill() {
     char id[10];
-    printf("Enter Receipt ID to update: ");
+    printf("\nEnter Receipt ID to update : ");
     scanf("%9s", id);
     getchar();
 
@@ -195,16 +219,16 @@ void updateBill() {
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\nCurrent bill:\n");
+            printf("\nCurrent bill :\n");
             printf("%s | %s | %d | %s\n",
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
 
-            printf("\nEnter new Customer Name: ");
+            printf("\nEnter new Customer Name : ");
             fgets(bills[i].CustomerName, sizeof(bills[i].CustomerName), stdin);
             bills[i].CustomerName[strcspn(bills[i].CustomerName, "\n")] = 0;
 
-            printf("Enter new Amount: ");
+            printf("Enter new Amount : ");
             scanf("%d", &bills[i].Amount);
             getchar();
 
