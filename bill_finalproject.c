@@ -18,10 +18,10 @@ void ensureFileExists() {
     if (!fp) {
         fp = fopen(FILE_NAME, "w");
         if (!fp) {
-            printf("\033[31mError:\033[0m Cannot create file %s\n", FILE_NAME);
+            printf("Error: Cannot create file %s\n", FILE_NAME);
             exit(1);
         }
-        printf("\033[33mCreated new file:\033[0m %s\n", FILE_NAME);
+        printf("Created new file: %s\n", FILE_NAME);
         fclose(fp);
     } else {
         fclose(fp);
@@ -46,7 +46,7 @@ int readAllBills(Bill bills[], int max) {
 void writeAllBills(Bill bills[], int count) {
     ensureFileExists();
     FILE *fp = fopen(FILE_NAME, "w");
-    if (!fp) { printf("\033[31mCannot write file.\033[0m\n"); return; }
+    if (!fp) { printf("Cannot write file.\n"); return; }
 
     for (int i = 0; i < count; i++)
         fprintf(fp, "%s,%s,%d,%s\n",
@@ -104,59 +104,67 @@ int validateAndFormatDate(const char *inputStr, char *formattedDate) {
 void addBill() {
     ensureFileExists();
     FILE *fp = fopen(FILE_NAME, "a");
-    if (!fp) { printf("\033[31mCannot open file.\033[0m\n"); return; }
+    if (!fp) { printf("Cannot open file.\n"); return; }
 
     Bill b;
     int duplicate;
     do {
         duplicate = 0;
-        printf("Enter Receipt ID: ");
+        printf("\nEnter Receipt ID : ");
         scanf("%9s", b.ReceiptID);
         getchar();
         if (receiptExists(b.ReceiptID)) {
-            printf("\033[31mError:\033[0m Receipt ID already exists.\n");
+            printf("Error: Receipt ID already exists.\n");
             duplicate = 1;
         }
     } while(duplicate);
 
-    printf("Enter Customer Name: ");
+    printf("Enter Customer Name : ");
     fgets(b.CustomerName, sizeof(b.CustomerName), stdin);
     b.CustomerName[strcspn(b.CustomerName, "\n")] = 0;
 
-    printf("Enter Amount: ");
+    printf("Enter Amount : ");
     scanf("%d", &b.Amount);
     getchar();
 
     char tempDate[20];
     do {
-        printf("Enter Date (yyyy-mm-dd): ");
+        printf("Enter Date (yyyy-mm-dd) : ");
         scanf("%19s", tempDate);
         getchar();
         if (!validateAndFormatDate(tempDate, b.Date))
-            printf("\033[31mError:\033[0m Invalid or future date. Please try again.\n");
+            printf("Error: Invalid or future date. Please try again.\n");
     } while (!validateAndFormatDate(tempDate, b.Date));
 
     fprintf(fp, "%s,%s,%d,%s\n", b.ReceiptID, b.CustomerName, b.Amount, b.Date);
     fclose(fp);
-    printf("\033[32mBill added successfully!\033[0m\n");
+    printf("Bill added successfully!\n");
 }
 
 void showBills() {
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
-    if (count == 0) { printf("\033[33mNo bills to show.\033[0m\n"); return; }
+    if (count == 0) { 
+        printf("No bills to show.\n"); 
+        return; 
+    }
 
-    printf("\nReceiptID | CustomerName | Amount | Date\n");
-    printf("----------------------------------------\n");
-    for (int i = 0; i < count; i++)
-        printf("%s | %s | %d | %s\n",
+    printf("\n+------------+-------------------------+---------+------------+\n");
+    printf("| Receipt ID |  Customer Name          | Amount | Date        |\n");
+    printf("+------------+-------------------------+---------+------------+\n");
+
+    for (int i = 0; i < count; i++) {
+        printf("|  %-10s|  %-23s|%6d  | %-10s  |\n",
                bills[i].ReceiptID, bills[i].CustomerName,
                bills[i].Amount, bills[i].Date);
+    }
+
+    printf("+------------+-------------------------+--------+-------------+\n");
 }
 
 void searchBill() {
     char keyword[50];
-    printf("Enter Receipt ID or Customer Name to search: ");
+    printf("\nEnter Receipt ID or Customer Name to search : ");
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
 
@@ -166,13 +174,13 @@ void searchBill() {
 
     for (int i = 0; i < count; i++) {
         if (strstr(bills[i].ReceiptID, keyword) || strstr(bills[i].CustomerName, keyword)) {
-            printf("%s | %s | %d | %s\n",
+            printf("\n%s | %s | %d | %s\n",
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
             found = 1;
         }
     }
-    if (!found) printf("\033[31mNo matching bill found.\033[0m\n");
+    if (!found) printf("No matching bill found.\n");
 }
 
 void updateBill() {
@@ -187,7 +195,7 @@ void updateBill() {
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\n\033[33mCurrent bill:\033[0m\n");
+            printf("\nCurrent bill:\n");
             printf("%s | %s | %d | %s\n",
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
@@ -206,19 +214,19 @@ void updateBill() {
                 scanf("%19s", tempDate);
                 getchar();
                 if (!validateAndFormatDate(tempDate, bills[i].Date))
-                    printf("\033[31mError:\033[0m Invalid or future date. Please try again.\n");
+                    printf("Error: Invalid or future date. Please try again.\n");
             } while (!validateAndFormatDate(tempDate, bills[i].Date));
 
             char confirm;
-            printf("\n\033[33mAre you sure you want to save these changes? (y/n): \033[0m");
+            printf("\nAre you sure you want to save these changes? (y/n): ");
             scanf(" %c", &confirm);
             getchar();
 
             if (confirm == 'y' || confirm == 'Y') {
                 writeAllBills(bills, count);
-                printf("\033[32mBill updated successfully.\033[0m\n");
+                printf("Bill updated successfully.\n");
             } else {
-                printf("\033[31mUpdate canceled.\033[0m\n");
+                printf("Update canceled.\n");
             }
 
             found = 1;
@@ -227,7 +235,7 @@ void updateBill() {
     }
 
     if (!found) {
-        printf("\033[31mReceipt ID not found.\033[0m\n");
+        printf("Receipt ID not found.\n");
     }
 }
 
@@ -243,13 +251,13 @@ void deleteBill() {
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\n\033[33mBill found:\033[0m\n");
+            printf("\nBill found:\n");
             printf("%s | %s | %d | %s\n",
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
 
             char confirm;
-            printf("\n\033[33mAre you sure you want to delete this bill? (y/n): \033[0m");
+            printf("\nAre you sure you want to delete this bill? (y/n): ");
             scanf(" %c", &confirm);
             getchar();
 
@@ -258,9 +266,9 @@ void deleteBill() {
                     bills[j] = bills[j + 1];
                 count--;
                 writeAllBills(bills, count);
-                printf("\033[32mBill deleted successfully.\033[0m\n");
+                printf("Bill deleted successfully.\n");
             } else {
-                printf("\033[31mDeletion canceled.\033[0m\n");
+                printf("Deletion canceled.\n");
             }
 
             found = 1;
@@ -269,7 +277,7 @@ void deleteBill() {
     }
 
     if (!found) {
-        printf("\033[31mReceipt ID not found.\033[0m\n");
+        printf("Receipt ID not found.\n");
     }
 }
 
@@ -300,8 +308,8 @@ void displayMenu() {
             case 3: searchBill(); break;
             case 4: updateBill(); break;
             case 5: deleteBill(); break;
-            case 0: printf("\033[32mExiting program.\033[0m\n"); break;
-            default: printf("\033[31mInvalid choice. Try again.\033[0m\n");
+            case 0: printf("Exiting program.\n"); break;
+            default: printf("Invalid choice. Try again.\n");
         }
     } while(choice != 0);
 }
