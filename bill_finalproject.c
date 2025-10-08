@@ -204,17 +204,15 @@ void runUnitTests() {
     printf(!validateAndFormatDate("2021-02-29", dateFormatted) ? "PASS\n" : "FAIL\n");
 
     printf("\n[TEST] Add Bill:\n");
-    // Add valid bill
+
     Bill newBill = {"B001", "Alice", 200.5, "2020-12-12"};
     fp = fopen(FILE_NAME, "a");
     fprintf(fp, "%s,%s,%.2f,%s\n", newBill.ReceiptID, newBill.CustomerName, newBill.Amount, newBill.Date);
     fclose(fp);
     printf(receiptExists("B001") ? "PASS\n" : "FAIL\n");
 
-    // Add bill with duplicate ID
     printf(receiptExists("A123") ? "PASS\n" : "FAIL\n");
 
-    // Add bill with invalid date
     printf(!validateAndFormatDate("2025-13-01", dateFormatted) ? "PASS\n" : "FAIL\n");
 
     printf("\n[TEST] Update Bill:\n");
@@ -234,7 +232,6 @@ void runUnitTests() {
     writeAllBills(bills, count);
     printf(updated ? "PASS\n" : "FAIL\n");
 
-    // Try updating non-existent bill
     updated = 0;
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, "Z999") == 0) {
@@ -244,7 +241,6 @@ void runUnitTests() {
     }
     printf(!updated ? "PASS\n" : "FAIL\n");
 
-    // Update bill with invalid date
     updated = 0;
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, "B001") == 0) {
@@ -301,3 +297,4 @@ int main() {
     displayMenu();
     return 0;
 }
+
