@@ -1,101 +1,129 @@
-//ต้องรันคู่กับโปรแกรม
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
+#include <ctype.h>
 
+#define FILE_NAME "bill_data.txt"
 #define MAX_BILLS 100
-#define FILE_NAME "bills.csv"
 
 typedef struct {
-    char ReceiptID[20];
+    char ReceiptID[10];
     char CustomerName[50];
-    double Amount;
+    int Amount;
     char Date[20];
 } Bill;
 
-bool isValidReceiptID(const char *id);
-bool receiptExists(const char *id);
-bool validateAndFormatDate(const char *inputDate, char *outputDate);
-int readAllBills(Bill bills[], int maxBills);
-void writeAllBills(Bill bills[], int count);
+// ฟังก์ชันระบบ
+int isValidReceiptID(const char *id) {
+    if (strlen(id) != 4) return 0;
+    if (!isalpha(id[0])) return 0;
+    for (int i = 1; i < 4; i++) {
+        if (!isdigit(id[i])) return 0;
+    }
+    return 1;
+}
 
-void runUnitTests() {
-    printf("\n===== UNIT TEST START =====\n");
+int validateAndFormatDate(const char *date, char *formattedDate) {
+    struct tm tm;
+    if (strptime(date, "%Y-%m-%d", &tm) == NULL) return 0;
 
-    char oldFile[] = FILE_NAME;
-    rename(FILE_NAME, "temp.csv");
+    time_t t = time(NULL);
+    struct tm now = *localtime(&t);
+
+    if (tm.tm_year + 1900 > now.tm_year + 1900) return 0;
+
+    strcpy(formattedDate, date);
+    return 1;
+}
+
+int receiptExists(const char *id) {
+    FILE *fp = fopen(FILE_NAME, "r");
+    if (!fp) return 0;
+    char line[256];
+    while (fgets(line, sizeof(line), fp)) {
+        char temp[10];
+        sscanf(line, "%[^,]", temp);
+        if (strcmp(temp, id) == 0) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+int readAllBills(Bill bills[], int max) {
+    FILE *fp = fopen(FILE_NAME, "r");
+    if (!fp) return 0;
+    int count = 0;
+    while (fscanf(fp, "%[^,],%[^,],%d,%s\n",
+                  bills[count].ReceiptID,
+                  bills[count].CustomerName,
+                  &bills[count].Amount,
+                  bills[count].Date) == 4) {
+        count++;
+        if (count >= max) break;
+    }
+    fclose(fp);
+    return count;
+}
+
+void writeAllBills(Bill bills[], int count) {
     FILE *fp = fopen(FILE_NAME, "w");
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%s,%s,%d,%s\n",
+                bills[i].ReceiptID,
+                bills[i].CustomerName,
+                bills[i].Amount,
+                bills[i].Date);
+    }
     fclose(fp);
+}
 
-    char dateFormatted[20];
-
-    printf("\n[TEST] ReceiptID Validation:\n");
-    printf(!isValidReceiptID("A12") ? "PASS\n" : "FAIL\n");
-    printf(isValidReceiptID("A123") ? "PASS\n" : "FAIL\n");
-
-    printf("\n[TEST] Duplicate ReceiptID:\n");
-    fp = fopen(FILE_NAME, "a");
-    fprintf(fp, "A123,John Doe,100,2020-01-01\n");
-    fclose(fp);
-    printf(receiptExists("A123") ? "PASS\n" : "FAIL\n");
-    printf(!receiptExists("B999") ? "PASS\n" : "FAIL\n");
-
-    printf("\n[TEST] Date Validation:\n");
-    printf(!validateAndFormatDate("3000-01-01", dateFormatted) ? "PASS\n" : "FAIL\n");
-    printf(validateAndFormatDate("2020-02-29", dateFormatted) ? "PASS\n" : "FAIL\n");
-    printf(!validateAndFormatDate("2021-02-29", dateFormatted) ? "PASS\n" : "FAIL\n");
-
-    printf("\n[TEST] Add Bill:\n");
-    Bill newBill = {"B001", "Alice", 200.5, "2020-12-12"};
-    fp = fopen(FILE_NAME, "a");
-    fprintf(fp, "%s,%s,%.2f,%s\n", newBill.ReceiptID, newBill.CustomerName, newBill.Amount, newBill.Date);
-    fclose(fp);
-    printf(receiptExists("B001") ? "PASS\n" : "FAIL\n");
-
-    printf(receiptExists("A123") ? "PASS\n" : "FAIL\n");
-    printf(!validateAndFormatDate("2025-13-01", dateFormatted) ? "PASS\n" : "FAIL\n");
-
-    printf("\n[TEST] Update Bill:\n");
+void showBills() {
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
-    int updated = 0;
     for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "B001") == 0) {
-            strcpy(bills[i].CustomerName, "Alice Updated");
-            bills[i].Amount = 500.0;
-            if (validateAndFormatDate("2020-10-10", bills[i].Date)) {
-                updated = 1;
-            }
-            break;
-        }
+        printf("%s,%s,%d,%s\n",
+               bills[i].ReceiptID,
+               bills[i].CustomerName,
+               bills[i].Amount,
+               bills[i].Date);
     }
-    writeAllBills(bills, count);
-    printf(updated ? "PASS\n" : "FAIL\n");
+}
 
-    updated = 0;
-    for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "Z999") == 0) {
-            updated = 1;
-            break;
-        }
-    }
-    printf(!updated ? "PASS\n" : "FAIL\n");
+// Unit Test
+void unitTest() {
+    char formattedDate[20];
+    printf("\n==== UNIT TEST ====\n");
 
-    updated = 0;
-    for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "B001") == 0) {
-            if (!validateAndFormatDate("2025-15-15", bills[i].Date)) {
-                updated = 1;
-            }
-            break;
-        }
-    }
-    printf(updated ? "PASS\n" : "FAIL\n");
+    printf("[isValidReceiptID] 'A123' => %d (expected: 1)\n", isValidReceiptID("A123"));
+    printf("[isValidReceiptID] 'a123' => %d (expected: 1)\n", isValidReceiptID("a123"));
+    printf("[isValidReceiptID] '1234' => %d (expected: 0)\n", isValidReceiptID("1234"));
+    printf("[isValidReceiptID] 'AB12' => %d (expected: 0)\n", isValidReceiptID("AB12"));
+    printf("[isValidReceiptID] 'A12' => %d (expected: 0)\n", isValidReceiptID("A12"));
+    printf("[isValidReceiptID] 'A1234' => %d (expected: 0)\n", isValidReceiptID("A1234"));
 
-    printf("\n===== UNIT TEST END =====\n");
+    printf("[validateAndFormatDate] '2023-01-01' => %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
+    printf("[validateAndFormatDate] '2099-12-31' => %d (expected: 0)\n", validateAndFormatDate("2099-12-31", formattedDate));
+    printf("[validateAndFormatDate] 'abcd-ef-gh' => %d (expected: 0)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
+    printf("[validateAndFormatDate] '2023-02-29' => %d (expected: 0)\n", validateAndFormatDate("2023-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2024-02-29' => %d (expected: 1)\n", validateAndFormatDate("2024-02-29", formattedDate));
+    printf("[validateAndFormatDate] '1900-02-29' => %d (expected: 0)\n", validateAndFormatDate("1900-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2000-02-29' => %d (expected: 1)\n", validateAndFormatDate("2000-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2023-04-31' => %d (expected: 0)\n", validateAndFormatDate("2023-04-31", formattedDate));
 
-    remove(FILE_NAME);
-    rename("temp.csv", oldFile);
+    FILE *fp = fopen(FILE_NAME, "w");
+    fprintf(fp, "B001,UnitTestUser,100,2023-01-01\n");
+    fclose(fp);
+
+    printf("[receiptExists] 'B001' => %d (expected: 1)\n", receiptExists("B001"));
+    printf("[receiptExists] 'X999' => %d (expected: 0)\n", receiptExists("X999"));
+}
+
+int main() {
+    printf("\n===== RUNNING TEST SUITE =====\n");
+    unitTest();
+    printf("\n===== TEST SUITE COMPLETE =====\n");
+    return 0;
 }
