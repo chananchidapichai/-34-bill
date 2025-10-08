@@ -350,56 +350,51 @@ void deleteBill() {
 }
 
 void unitTest() {
+    char formattedDate[20];
     printf("\n==== UNIT TEST ====\n");
 
-    printf("Test: isValidReceiptID(\"A123\") => %d (expected: 1)\n", isValidReceiptID("A123"));
-    printf("Test: isValidReceiptID(\"a123\") => %d (expected: 1)\n", isValidReceiptID("a123")); // lowercase
-    printf("Test: isValidReceiptID(\"1234\") => %d (expected: 0)\n", isValidReceiptID("1234"));
-    printf("Test: isValidReceiptID(\"AB12\") => %d (expected: 0)\n", isValidReceiptID("AB12"));
-    printf("Test: isValidReceiptID(\"A12\") => %d (expected: 0)\n", isValidReceiptID("A12"));
-    printf("Test: isValidReceiptID(\"A1234\") => %d (expected: 0)\n", isValidReceiptID("A1234"));
+    printf("[isValidReceiptID] 'A123' => %d (expected: 1)\n", isValidReceiptID("A123"));
+    printf("[isValidReceiptID] 'a123' => %d (expected: 1)\n", isValidReceiptID("a123"));
+    printf("[isValidReceiptID] '1234' => %d (expected: 0)\n", isValidReceiptID("1234"));
+    printf("[isValidReceiptID] 'AB12' => %d (expected: 0)\n", isValidReceiptID("AB12"));
+    printf("[isValidReceiptID] 'A12' => %d (expected: 0)\n", isValidReceiptID("A12"));
+    printf("[isValidReceiptID] 'A1234' => %d (expected: 0)\n", isValidReceiptID("A1234"));
 
-    char formattedDate[20];
-    printf("Test: validateAndFormatDate(\"2023-01-01\") => %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
-    printf("Test: validateAndFormatDate(\"2025-12-31\") => %d (expected: 0)\n", validateAndFormatDate("2025-12-31", formattedDate)); // future date
-    printf("Test: validateAndFormatDate(\"abcd-ef-gh\") => %d (expected: 0)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
-    printf("Test: validateAndFormatDate(\"2023-02-29\") => %d (expected: 0)\n", validateAndFormatDate("2023-02-29", formattedDate)); // non-leap year
-    printf("Test: validateAndFormatDate(\"2024-02-29\") => %d (expected: 1)\n", validateAndFormatDate("2024-02-29", formattedDate)); // leap year
-    printf("Test: validateAndFormatDate(\"1900-02-29\") => %d (expected: 0)\n", validateAndFormatDate("1900-02-29", formattedDate)); // not leap year
-    printf("Test: validateAndFormatDate(\"2000-02-29\") => %d (expected: 1)\n", validateAndFormatDate("2000-02-29", formattedDate)); // leap year
-    printf("Test: validateAndFormatDate(\"2023-04-31\") => %d (expected: 0)\n", validateAndFormatDate("2023-04-31", formattedDate)); // invalid day
+    printf("[validateAndFormatDate] '2023-01-01' => %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
+    printf("[validateAndFormatDate] '2099-12-31' => %d (expected: 0)\n", validateAndFormatDate("2099-12-31", formattedDate));
+    printf("[validateAndFormatDate] 'abcd-ef-gh' => %d (expected: 0)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
+    printf("[validateAndFormatDate] '2023-02-29' => %d (expected: 0)\n", validateAndFormatDate("2023-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2024-02-29' => %d (expected: 1)\n", validateAndFormatDate("2024-02-29", formattedDate));
+    printf("[validateAndFormatDate] '1900-02-29' => %d (expected: 0)\n", validateAndFormatDate("1900-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2000-02-29' => %d (expected: 1)\n", validateAndFormatDate("2000-02-29", formattedDate));
+    printf("[validateAndFormatDate] '2023-04-31' => %d (expected: 0)\n", validateAndFormatDate("2023-04-31", formattedDate));
 
     FILE *fp = fopen(FILE_NAME, "w");
     fprintf(fp, "B001,UnitTestUser,100,2023-01-01\n");
     fclose(fp);
 
-    printf("Test: receiptExists(\"B001\") => %d (expected: 1)\n", receiptExists("B001"));
-    printf("Test: receiptExists(\"X999\") => %d (expected: 0)\n", receiptExists("X999"));
-    printf("=== UNIT TEST PASS ===");
+    printf("[receiptExists] 'B001' => %d (expected: 1)\n", receiptExists("B001"));
+    printf("[receiptExists] 'X999' => %d (expected: 0)\n", receiptExists("X999"));
 }
 
 void e2eTest() {
     printf("\n==== E2E TEST ====\n");
 
     FILE *fp = fopen(FILE_NAME, "w");
-    
+    fclose(fp);
+
     printf("Adding bill A100...\n");
     fp = fopen(FILE_NAME, "a");
     fprintf(fp, "A100,E2ETestUser,200,2023-01-01\n");
     fclose(fp);
 
     if (receiptExists("A100"))
-        printf("E2E Test Passed: Bill A100 added.\n");
+        printf("PASS: Bill A100 added.\n");
     else
-        printf("E2E Test Failed: Bill A100 not found after adding.\n");
+        printf("FAIL: Bill A100 not found.\n");
 
     printf("Showing all bills:\n");
     showBills();
-
-    printf("Searching bill with keyword 'A100':\n");
-    char keyword[50] = "A100";
-    toLowerStr(keyword);
-    searchBill();
 
     printf("Updating bill A100...\n");
     Bill bills[MAX_BILLS];
@@ -414,11 +409,7 @@ void e2eTest() {
     }
     writeAllBills(bills, count);
 
-    if (receiptExists("A100"))
-        printf("E2E Test Passed: Bill A100 updated.\n");
-    else
-        printf("E2E Test Failed: Bill A100 not found after update.\n");
-
+    printf("Showing bills after update:\n");
     showBills();
 
     printf("Deleting bill A100...\n");
@@ -434,9 +425,9 @@ void e2eTest() {
     }
 
     if (!receiptExists("A100"))
-        printf("E2E Test Passed: Bill A100 deleted.\n");
+        printf("PASS: Bill A100 deleted.\n");
     else
-        printf("E2E Test Failed: Bill A100 still exists.\n");
+        printf("FAIL: Bill A100 still exists.\n");
 
     showBills();
 }
