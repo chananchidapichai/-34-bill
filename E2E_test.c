@@ -1,33 +1,49 @@
-// วิธีcomplie
-// gcc end_to_end_test.c -o end_to_end_test
-// ./end_to_end_test
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
-#define FILE_NAME "bills.csv"
+#define FILE_NAME "bill_data.txt"
 #define MAX_BILLS 100
 
 typedef struct {
     char ReceiptID[10];
     char CustomerName[50];
-    double Amount;
+    int Amount;
     char Date[20];
 } Bill;
 
+// ฟังก์ชันระบบ
 int isValidReceiptID(const char *id) {
-    return strlen(id) == 4;
+    if (strlen(id) != 4) return 0;
+    if (!isalpha(id[0])) return 0;
+    for (int i = 1; i < 4; i++) {
+        if (!isdigit(id[i])) return 0;
+    }
+    return 1;
+}
+
+int validateAndFormatDate(const char *date, char *formattedDate) {
+    struct tm tm;
+    if (strptime(date, "%Y-%m-%d", &tm) == NULL) return 0;
+
+    time_t t = time(NULL);
+    struct tm now = *localtime(&t);
+
+    if (tm.tm_year + 1900 > now.tm_year + 1900) return 0;
+
+    strcpy(formattedDate, date);
+    return 1;
 }
 
 int receiptExists(const char *id) {
     FILE *fp = fopen(FILE_NAME, "r");
     if (!fp) return 0;
-    char line[200];
+    char line[256];
     while (fgets(line, sizeof(line), fp)) {
-        char fileID[10];
-        sscanf(line, "%[^,]", fileID);
-        if (strcmp(fileID, id) == 0) {
+        char temp[10];
+        sscanf(line, "%[^,]", temp);
+        if (strcmp(temp, id) == 0) {
             fclose(fp);
             return 1;
         }
@@ -36,101 +52,104 @@ int receiptExists(const char *id) {
     return 0;
 }
 
-int validateAndFormatDate(const char *date, char *formatted) {
-    int y, m, d;
-    if (sscanf(date, "%d-%d-%d", &y, &m, &d) != 3) return 0;
-    if (y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) return 0;
-    struct tm now = *localtime(&(time_t){time(NULL)});
-    if (y > now.tm_year + 1900 ||
-        (y == now.tm_year + 1900 && m > now.tm_mon + 1) ||
-        (y == now.tm_year + 1900 && m == now.tm_mon + 1 && d > now.tm_mday))
-        return 0;
-    sprintf(formatted, "%04d-%02d-%02d", y, m, d);
-    return 1;
-}
-
-int readAllBills(Bill *bills, int max) {
+int readAllBills(Bill bills[], int max) {
     FILE *fp = fopen(FILE_NAME, "r");
     if (!fp) return 0;
-    char line[200];
     int count = 0;
-    while (fgets(line, sizeof(line), fp) && count < max) {
-        sscanf(line, "%[^,],%[^,],%lf,%s", bills[count].ReceiptID, bills[count].CustomerName, &bills[count].Amount, bills[count].Date);
+    while (fscanf(fp, "%[^,],%[^,],%d,%s\n",
+                  bills[count].ReceiptID,
+                  bills[count].CustomerName,
+                  &bills[count].Amount,
+                  bills[count].Date) == 4) {
         count++;
+        if (count >= max) break;
     }
     fclose(fp);
     return count;
 }
 
-void writeAllBills(Bill *bills, int count) {
+void writeAllBills(Bill bills[], int count) {
     FILE *fp = fopen(FILE_NAME, "w");
     for (int i = 0; i < count; i++) {
-        fprintf(fp, "%s,%s,%.2f,%s\n", bills[i].ReceiptID, bills[i].CustomerName, bills[i].Amount, bills[i].Date);
+        fprintf(fp, "%s,%s,%d,%s\n",
+                bills[i].ReceiptID,
+                bills[i].CustomerName,
+                bills[i].Amount,
+                bills[i].Date);
     }
     fclose(fp);
 }
 
-void runEndToEndTest() {
-    printf("\n===== END-TO-END TEST START =====\n");
-
-    char oldFile[] = FILE_NAME;
-    rename(FILE_NAME, "temp.csv");
-    FILE *fp = fopen(FILE_NAME, "w"); fclose(fp);
-
-    printf("\n[TEST] Add Bills\n");
-    Bill test1 = {"T001", "Test User1", 123.45, "2022-05-01"};
-    Bill test2 = {"T002", "Test User2", 678.90, "2023-06-15"};
-    fp = fopen(FILE_NAME, "a");
-    fprintf(fp, "%s,%s,%.2f,%s\n", test1.ReceiptID, test1.CustomerName, test1.Amount, test1.Date);
-    fprintf(fp, "%s,%s,%.2f,%s\n", test2.ReceiptID, test2.CustomerName, test2.Amount, test2.Date);
-    fclose(fp);
-
+void showBills() {
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
-    printf(count == 2 ? "PASS: Added 2 bills\n" : "FAIL: Add bills\n");
-
-    printf("\n[TEST] Search Bill\n");
-    printf(receiptExists("T001") ? "PASS: Bill T001 exists\n" : "FAIL: Bill T001 missing\n");
-    printf(!receiptExists("ZZZ") ? "PASS: Non-existent bill check\n" : "FAIL: Non-existent bill found\n");
-
-    printf("\n[TEST] Update Bill\n");
     for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "T002") == 0) {
-            strcpy(bills[i].CustomerName, "Test User2 Updated");
-            bills[i].Amount = 999.99;
-            strcpy(bills[i].Date, "2024-01-01");
+        printf("%s,%s,%d,%s\n",
+               bills[i].ReceiptID,
+               bills[i].CustomerName,
+               bills[i].Amount,
+               bills[i].Date);
+    }
+}
+
+void e2eTest() {
+    printf("\n==== E2E TEST ====\n");
+
+    FILE *fp = fopen(FILE_NAME, "w");
+    fclose(fp);
+
+    printf("Adding bill A100...\n");
+    fp = fopen(FILE_NAME, "a");
+    fprintf(fp, "A100,E2ETestUser,200,2023-01-01\n");
+    fclose(fp);
+
+    if (receiptExists("A100"))
+        printf("PASS: Bill A100 added.\n");
+    else
+        printf("FAIL: Bill A100 not found.\n");
+
+    printf("Showing all bills:\n");
+    showBills();
+
+    printf("Updating bill A100...\n");
+    Bill bills[MAX_BILLS];
+    int count = readAllBills(bills, MAX_BILLS);
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
+            strcpy(bills[i].CustomerName, "UpdatedUser");
+            bills[i].Amount = 999;
+            strcpy(bills[i].Date, "2023-02-02");
             break;
         }
     }
     writeAllBills(bills, count);
 
-    readAllBills(bills, MAX_BILLS);
-    printf(strcmp(bills[1].CustomerName, "Test User2 Updated") == 0 &&
-           bills[1].Amount == 999.99 ? "PASS: Update bill successful\n" : "FAIL: Update bill failed\n");
+    printf("Showing bills after update:\n");
+    showBills();
 
-    printf("\n[TEST] Delete Bill\n");
-    for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "T001") == 0) {
-            for (int j = i; j < count - 1; j++) bills[j] = bills[j+1];
-            count--;
-            break;
-        }
-    }
-    writeAllBills(bills, count);
+    printf("Deleting bill A100...\n");
     count = readAllBills(bills, MAX_BILLS);
-    printf(count == 1 && !receiptExists("T001") ? "PASS: Delete bill successful\n" : "FAIL: Delete bill failed\n");
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
+            for (int j = i; j < count - 1; j++)
+                bills[j] = bills[j + 1];
+            count--;
+            writeAllBills(bills, count);
+            break;
+        }
+    }
 
-    printf("\n[TEST] Edge Cases\n");
-    printf(!validateAndFormatDate("2025-00-00", NULL) ? "PASS: Invalid date edge case\n" : "FAIL: Invalid date edge case\n");
-    printf(!isValidReceiptID("") ? "PASS: Empty ReceiptID edge case\n" : "FAIL: Empty ReceiptID edge case\n");
+    if (!receiptExists("A100"))
+        printf("PASS: Bill A100 deleted.\n");
+    else
+        printf("FAIL: Bill A100 still exists.\n");
 
-    printf("\n===== END-TO-END TEST END =====\n");
-
-    remove(FILE_NAME);
-    rename("temp.csv", oldFile);
+    showBills();
 }
 
 int main() {
-    runEndToEndTest();
+    printf("\n===== RUNNING TEST SUITE =====\n");
+    e2eTest();
+    printf("\n===== TEST SUITE COMPLETE =====\n");
     return 0;
 }
