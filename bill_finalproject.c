@@ -349,39 +349,82 @@ void deleteBill() {
     }
 }
 
-// ===== UNIT TEST =====
 void unitTest() {
     printf("\n==== UNIT TEST ====\n");
 
     printf("Test: isValidReceiptID(\"A123\") => %d (expected: 1)\n", isValidReceiptID("A123"));
+    printf("Test: isValidReceiptID(\"a123\") => %d (expected: 1)\n", isValidReceiptID("a123")); // lowercase
     printf("Test: isValidReceiptID(\"1234\") => %d (expected: 0)\n", isValidReceiptID("1234"));
     printf("Test: isValidReceiptID(\"AB12\") => %d (expected: 0)\n", isValidReceiptID("AB12"));
+    printf("Test: isValidReceiptID(\"A12\") => %d (expected: 0)\n", isValidReceiptID("A12"));
+    printf("Test: isValidReceiptID(\"A1234\") => %d (expected: 0)\n", isValidReceiptID("A1234"));
 
     char formattedDate[20];
     printf("Test: validateAndFormatDate(\"2023-01-01\") => %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
-    printf("Test: validateAndFormatDate(\"2025-12-31\") => %d (expected: 0)\n", validateAndFormatDate("2025-12-31", formattedDate));
+    printf("Test: validateAndFormatDate(\"2025-12-31\") => %d (expected: 0)\n", validateAndFormatDate("2025-12-31", formattedDate)); // future date
+    printf("Test: validateAndFormatDate(\"abcd-ef-gh\") => %d (expected: 0)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
+    printf("Test: validateAndFormatDate(\"2023-02-29\") => %d (expected: 0)\n", validateAndFormatDate("2023-02-29", formattedDate)); // non-leap year
+    printf("Test: validateAndFormatDate(\"2024-02-29\") => %d (expected: 1)\n", validateAndFormatDate("2024-02-29", formattedDate)); // leap year
+    printf("Test: validateAndFormatDate(\"1900-02-29\") => %d (expected: 0)\n", validateAndFormatDate("1900-02-29", formattedDate)); // not leap year
+    printf("Test: validateAndFormatDate(\"2000-02-29\") => %d (expected: 1)\n", validateAndFormatDate("2000-02-29", formattedDate)); // leap year
+    printf("Test: validateAndFormatDate(\"2023-04-31\") => %d (expected: 0)\n", validateAndFormatDate("2023-04-31", formattedDate)); // invalid day
+
+    FILE *fp = fopen(FILE_NAME, "w");
+    fprintf(fp, "B001,UnitTestUser,100,2023-01-01\n");
+    fclose(fp);
+
+    printf("Test: receiptExists(\"B001\") => %d (expected: 1)\n", receiptExists("B001"));
+    printf("Test: receiptExists(\"X999\") => %d (expected: 0)\n", receiptExists("X999"));
+    printf("=== UNIT TEST PASS ===");
 }
 
-// ===== E2E TEST =====
 void e2eTest() {
     printf("\n==== E2E TEST ====\n");
 
-    printf("Adding bill A999...\n");
-    FILE *fp = fopen(FILE_NAME, "a");
-    fprintf(fp, "A999,TestUser,100,2023-01-01\n");
+    FILE *fp = fopen(FILE_NAME, "w");
+    
+    printf("Adding bill A100...\n");
+    fp = fopen(FILE_NAME, "a");
+    fprintf(fp, "A100,E2ETestUser,200,2023-01-01\n");
     fclose(fp);
 
-    printf("Searching bill A999...\n");
-    if (receiptExists("A999"))
-        printf("E2E Test Passed: Bill A999 exists.\n");
+    if (receiptExists("A100"))
+        printf("E2E Test Passed: Bill A100 added.\n");
     else
-        printf("E2E Test Failed: Bill A999 not found.\n");
+        printf("E2E Test Failed: Bill A100 not found after adding.\n");
 
-    printf("Deleting bill A999...\n");
+    printf("Showing all bills:\n");
+    showBills();
+
+    printf("Searching bill with keyword 'A100':\n");
+    char keyword[50] = "A100";
+    toLowerStr(keyword);
+    searchBill();
+
+    printf("Updating bill A100...\n");
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
     for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "A999") == 0) {
+        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
+            strcpy(bills[i].CustomerName, "UpdatedUser");
+            bills[i].Amount = 999;
+            strcpy(bills[i].Date, "2023-02-02");
+            break;
+        }
+    }
+    writeAllBills(bills, count);
+
+    if (receiptExists("A100"))
+        printf("E2E Test Passed: Bill A100 updated.\n");
+    else
+        printf("E2E Test Failed: Bill A100 not found after update.\n");
+
+    showBills();
+
+    printf("Deleting bill A100...\n");
+    count = readAllBills(bills, MAX_BILLS);
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
             for (int j = i; j < count - 1; j++)
                 bills[j] = bills[j + 1];
             count--;
@@ -390,10 +433,12 @@ void e2eTest() {
         }
     }
 
-    if (!receiptExists("A999"))
-        printf("E2E Test Passed: Bill A999 deleted.\n");
+    if (!receiptExists("A100"))
+        printf("E2E Test Passed: Bill A100 deleted.\n");
     else
-        printf("E2E Test Failed: Bill A999 still exists.\n");
+        printf("E2E Test Failed: Bill A100 still exists.\n");
+
+    showBills();
 }
 
 void displayMenu() {
