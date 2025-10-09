@@ -126,63 +126,63 @@ int validateAndFormatDate(const char *inputStr, char *formattedDate) {
 void addBill() {
     ensureFileExists();
     FILE *fp = fopen(FILE_NAME, "a");
-    if (!fp) { printf("Cannot open file.\n"); return; }
+    if (!fp) { printf(RED "Cannot open file.\n" RESET); return; }
 
     Bill b;
     int duplicate;
     do {
         duplicate = 0;
-        printf("\nEnter Receipt ID (1 letter + 3 digits): ");
+        printf(YELLOW "\nEnter Receipt ID (1 letter + 3 digits): " RESET);
         scanf("%9s", b.ReceiptID);
         getchar();
 
         b.ReceiptID[0] = toupper((unsigned char)b.ReceiptID[0]);
 
         if (!isValidReceiptID(b.ReceiptID)) {
-            printf("Error: Invalid format. Must be 1 letter followed by 3 digits.\n");
+            printf(RED "Error: Invalid format. Must be 1 letter followed by 3 digits.\n" RESET);
             duplicate = 1;
             continue;
         }
 
         if (receiptExists(b.ReceiptID)) {
-            printf("Error: Receipt ID already exists.\n");
+            printf(RED "Error: Receipt ID already exists.\n" RESET);
             duplicate = 1;
         }
     } while(duplicate);
 
-    printf("Enter Customer Name : ");
+    printf(YELLOW "Enter Customer Name : " RESET);
     fgets(b.CustomerName, sizeof(b.CustomerName), stdin);
     b.CustomerName[strcspn(b.CustomerName, "\n")] = 0;
 
-    printf("Enter Amount : ");
+    printf(YELLOW "Enter Amount : " RESET);
     scanf("%d", &b.Amount);
     getchar();
 
     char tempDate[20];
     do {
-        printf("Enter Date (yyyy-mm-dd) : ");
+        printf(YELLOW "Enter Date (yyyy-mm-dd) : " RESET);
         scanf("%19s", tempDate);
         getchar();
         if (!validateAndFormatDate(tempDate, b.Date))
-            printf("Error: Invalid or future date. Please try again.\n");
+            printf(RED "Error: Invalid or future date. Please try again.\n" RESET);
     } while (!validateAndFormatDate(tempDate, b.Date));
 
     fprintf(fp, "%s,%s,%d,%s\n", b.ReceiptID, b.CustomerName, b.Amount, b.Date);
     fclose(fp);
-    printf("Bill added successfully!\n");
+    printf(GREEN "Bill added successfully!\n" RESET);
 }
 
 void showBills() {
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
     if (count == 0) { 
-        printf("No bills to show.\n"); 
+        printf(RED "No bills to show.\n" RESET); 
         return; 
     }
 
-    printf("\n+------------+-------------------------+---------+------------+\n");
-    printf("| Receipt ID |  Customer Name          | Amount | Date        |\n");
-    printf("+------------+-------------------------+---------+------------+\n");
+    printf(CYAN "\n+------------+-------------------------+---------+------------+\n" RESET);
+    printf(BOLD "| Receipt ID |  Customer Name          | Amount | Date        |\n" RESET);
+    printf(CYAN "+------------+-------------------------+---------+------------+\n" RESET);
 
     for (int i = 0; i < count; i++) {
         printf("|  %-10s|  %-23s|%6d  | %-10s  |\n",
@@ -190,12 +190,12 @@ void showBills() {
                bills[i].Amount, bills[i].Date);
     }
 
-    printf("+------------+-------------------------+--------+-------------+\n");
+    printf(CYAN "+------------+-------------------------+--------+-------------+\n" RESET);
 }
 
 void searchBill() {
     char keyword[50];
-    printf("\nEnter Receipt ID or Customer Name to search : ");
+    printf(YELLOW "\nEnter Receipt ID or Customer Name to search : " RESET);
     fgets(keyword, sizeof(keyword), stdin);
     keyword[strcspn(keyword, "\n")] = 0;
 
@@ -205,10 +205,10 @@ void searchBill() {
     int count = readAllBills(bills, MAX_BILLS);
     int found = 0;
 
-    printf("\nSearch results:\n");
-    printf("+------------+-------------------------+---------+------------+\n");
-    printf("| Receipt ID | Customer Name           | Amount  | Date       |\n");
-    printf("+------------+-------------------------+---------+------------+\n");
+    printf(BOLD "\nSearch results:\n" RESET);
+    printf(CYAN "+------------+-------------------------+---------+------------+\n" RESET);
+    printf(BOLD "| Receipt ID | Customer Name           | Amount  | Date       |\n" RESET);
+    printf(CYAN "+------------+-------------------------+---------+------------+\n" RESET);
 
     for (int i = 0; i < count; i++) {
         char receiptLower[10], nameLower[50];
@@ -218,28 +218,28 @@ void searchBill() {
         toLowerStr(nameLower);
 
         if (strstr(receiptLower, keyword) || strstr(nameLower, keyword)) {
-            printf("| %-10s | %-23s | %7d | %-10s |\n",
+            printf(GREEN "| %-10s | %-23s | %7d | %-10s |\n" RESET,
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
             found = 1;
         }
     }
 
-    printf("+------------+-------------------------+---------+------------+\n");
+    printf(CYAN "+------------+-------------------------+---------+------------+\n" RESET);
 
     if (!found)
-        printf("No matching bill found.\n");
+        printf(RED "No matching bill found.\n" RESET);
 }
 
 void updateBill() {
     char id[10];
-    printf("\nEnter Receipt ID to update : ");
+    printf(YELLOW "\nEnter Receipt ID to update : " RESET);
     scanf("%9s", id);
     getchar();
 
     id[0] = toupper((unsigned char)id[0]);
     if (!isValidReceiptID(id)) {
-        printf("Error: Invalid Receipt ID format.\n");
+        printf(RED "Error: Invalid Receipt ID format.\n" RESET);
         return;
     }
 
@@ -255,18 +255,18 @@ void updateBill() {
     }
 
     if (found == -1) {
-        printf("Receipt ID not found.\n");
+        printf(RED "Receipt ID not found.\n" RESET);
         return;
     }
 
     char choice;
     do {
-        printf("\nCurrent bill:\n");
-        printf("%s | %s | %d | %s\n",
+        printf(CYAN "\nCurrent bill:\n" RESET);
+        printf(MAGENTA "%s | %s | %d | %s\n" RESET,
                bills[found].ReceiptID, bills[found].CustomerName,
                bills[found].Amount, bills[found].Date);
 
-        printf("\nWhat do you want to update?\n");
+        printf(YELLOW "\nWhat do you want to update?\n" RESET);
         printf("a) Customer Name\n");
         printf("b) Amount\n");
         printf("c) Date\n");
@@ -276,48 +276,48 @@ void updateBill() {
         getchar();
 
         if (choice == 'a' || choice == 'A') {
-            printf("\nEnter new Customer Name : ");
+            printf(YELLOW "\nEnter new Customer Name : " RESET);
             fgets(bills[found].CustomerName, sizeof(bills[found].CustomerName), stdin);
             bills[found].CustomerName[strcspn(bills[found].CustomerName, "\n")] = 0;
-            printf("Customer Name updated.\n");
+            printf(GREEN "Customer Name updated.\n" RESET);
         } else if (choice == 'b' || choice == 'B') {
-            printf("\nEnter new Amount : ");
+            printf(YELLOW "\nEnter new Amount : " RESET);
             scanf("%d", &bills[found].Amount);
             getchar();
-            printf("Amount updated.\n");
+            printf(GREEN "Amount updated.\n" RESET);
         } else if (choice == 'c' || choice == 'C') {
             char tempDate[20];
             do {
-                printf("\nEnter new Date (yyyy-mm-dd): ");
+                printf(YELLOW "\nEnter new Date (yyyy-mm-dd): " RESET);
                 scanf("%19s", tempDate);
                 getchar();
                 if (!validateAndFormatDate(tempDate, bills[found].Date))
-                    printf("Error: Invalid or future date. Please try again.\n");
+                    printf(RED "Error: Invalid or future date. Please try again.\n" RESET);
             } while (!validateAndFormatDate(tempDate, bills[found].Date));
-            printf("Date updated.\n");
+            printf(GREEN "Date updated.\n" RESET);
         } else if (choice == 'x' || choice == 'X') {
             break;
         } else {
-            printf("Invalid choice.\n");
+            printf(RED "Invalid choice.\n" RESET);
         }
     } while (1);
 
     char confirm;
-    printf("\nAre you sure you want to save these changes? (y/n): ");
+    printf(YELLOW "\nAre you sure you want to save these changes? (y/n): " RESET);
     scanf(" %c", &confirm);
     getchar();
 
     if (confirm == 'y' || confirm == 'Y') {
         writeAllBills(bills, count);
-        printf("Bill updated successfully.\n");
+        printf(GREEN "Bill updated successfully.\n" RESET);
     } else {
-        printf("Update canceled.\n");
+        printf(RED "Update canceled.\n" RESET);
     }
 }
 
 void deleteBill() {
     char id[10];
-    printf("\nEnter Receipt ID to delete : ");
+    printf(YELLOW "\nEnter Receipt ID to delete : " RESET);
     scanf("%9s", id);
     getchar();
 
@@ -327,13 +327,13 @@ void deleteBill() {
 
     for (int i = 0; i < count; i++) {
         if (strcmp(bills[i].ReceiptID, id) == 0) {
-            printf("\nBill found:\n");
-            printf("%s | %s | %d | %s\n",
+            printf(CYAN "\nBill found:\n" RESET);
+            printf(MAGENTA "%s | %s | %d | %s\n" RESET,
                    bills[i].ReceiptID, bills[i].CustomerName,
                    bills[i].Amount, bills[i].Date);
 
             char confirm;
-            printf("\nAre you sure you want to delete this bill? (y/n): ");
+            printf(YELLOW "\nAre you sure you want to delete this bill? (y/n): " RESET);
             scanf(" %c", &confirm);
             getchar();
 
@@ -342,9 +342,9 @@ void deleteBill() {
                     bills[j] = bills[j + 1];
                 count--;
                 writeAllBills(bills, count);
-                printf("Bill deleted successfully.\n");
+                printf(GREEN "Bill deleted successfully.\n" RESET);
             } else {
-                printf("Deletion canceled.\n");
+                printf(RED "Deletion canceled.\n" RESET);
             }
 
             found = 1;
@@ -353,7 +353,7 @@ void deleteBill() {
     }
 
     if (!found) {
-        printf("Receipt ID not found.\n");
+        printf(RED "Receipt ID not found.\n" RESET);
     }
 }
 
@@ -496,22 +496,22 @@ void e2eTest() {
 }
 
 void displayMenu() {
-    printf("\n--------------------------------------------------------------");
-        printf("\n                   BILL MANAGEMENT MENU\n");
-        printf("--------------------------------------------------------------");
-        printf("\nplease enter the number in front of menu that you want to use.\n");
-        printf("______________________________________________________________\n\n");
-        printf("  1.  SHOW ALL BILLS\n");
-        printf("  2.  ADD NEW BILL\n");
-        printf("  3.  SEARCH BILL\n");
-        printf("  4.  UPDATE BILL\n");
-        printf("  5.  DELETE BILL\n");
-        printf("  6.  UNIT TEST\n");
-        printf("  7.  END-TO-END TEST\n");
-        printf("                                                0 -->  EXIT\n");
-        printf("______________________________________________________________\n\n");
-        printf("What do you want to do?\n");
-        printf("Please enter your choice : ");
+    printf(CYAN "\n--------------------------------------------------------------" RESET);
+    printf(BOLD "\n                   BILL MANAGEMENT MENU\n" RESET);
+    printf(CYAN "--------------------------------------------------------------" RESET);
+    printf("\nplease enter the number in front of menu that you want to use.\n");
+    printf("______________________________________________________________\n\n");
+    printf(YELLOW "  1.  SHOW ALL BILLS\n" RESET);
+    printf(YELLOW "  2.  ADD NEW BILL\n" RESET);
+    printf(YELLOW "  3.  SEARCH BILL\n" RESET);
+    printf(YELLOW "  4.  UPDATE BILL\n" RESET);
+    printf(YELLOW "  5.  DELETE BILL\n" RESET);
+    printf(CYAN "  6.  UNIT TEST\n" RESET);
+    printf(MAGENTA "  7.  END-TO-END TEST\n" RESET);
+    printf(RED "                                                0 -->  EXIT\n" RESET);
+    printf("______________________________________________________________\n\n");
+    printf("What do you want to do?\n");
+    printf(YELLOW "Please enter your choice : " RESET);
 }
 
 int main() {
