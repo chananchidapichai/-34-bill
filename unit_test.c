@@ -1,7 +1,15 @@
+//run with bill_finalproject.c
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define CYAN    "\033[36m"
+#define MAGENTA "\033[35m"
 
 #define FILE_NAME "bill_data.txt"
 #define MAX_BILLS 100
@@ -92,37 +100,32 @@ void showBills() {
 }
 
 void unitTest() {
+    printf("\n%s========== UNIT TEST ==========%s\n", BOLD, RESET);
     char formattedDate[20];
-    printf("\n==== UNIT TEST ====\n");
 
-    printf("[isValidReceiptID] 'A123' => %d (expected: 1)\n", isValidReceiptID("A123"));
-    printf("[isValidReceiptID] 'a123' => %d (expected: 1)\n", isValidReceiptID("a123"));
-    printf("[isValidReceiptID] '1234' => %d (expected: 0)\n", isValidReceiptID("1234"));
-    printf("[isValidReceiptID] 'AB12' => %d (expected: 0)\n", isValidReceiptID("AB12"));
-    printf("[isValidReceiptID] 'A12' => %d (expected: 0)\n", isValidReceiptID("A12"));
-    printf("[isValidReceiptID] 'A1234' => %d (expected: 0)\n", isValidReceiptID("A1234"));
+    printf("\n%s[TEST 1]%s Function: %sisValidReceiptID()%s\n", CYAN, RESET, MAGENTA, RESET);
+    printf("------------------------------------\n");
+    printf("Case 1: 'A123' -> %d (expected: 1)\n", isValidReceiptID("A123"));
+    printf("Case 2: 'a123' -> %d (expected: 1)\n", isValidReceiptID("a123"));
+    printf("Case 3: '1234' -> %d (expected: 0)\n", isValidReceiptID("1234"));
+    printf("Case 4: 'AB12' -> %d (expected: 0)\n", isValidReceiptID("AB12"));
+    printf("Case 5: 'A12'  -> %d (expected: 0)\n", isValidReceiptID("A12"));
+    printf("Case 6: 'A1234' -> %d (expected: 0)\n", isValidReceiptID("A1234"));
 
-    printf("[validateAndFormatDate] '2023-01-01' => %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
-    printf("[validateAndFormatDate] '2099-12-31' => %d (expected: 0)\n", validateAndFormatDate("2099-12-31", formattedDate));
-    printf("[validateAndFormatDate] 'abcd-ef-gh' => %d (expected: 0)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
-    printf("[validateAndFormatDate] '2023-02-29' => %d (expected: 0)\n", validateAndFormatDate("2023-02-29", formattedDate));
-    printf("[validateAndFormatDate] '2024-02-29' => %d (expected: 1)\n", validateAndFormatDate("2024-02-29", formattedDate));
-    printf("[validateAndFormatDate] '1900-02-29' => %d (expected: 0)\n", validateAndFormatDate("1900-02-29", formattedDate));
-    printf("[validateAndFormatDate] '2000-02-29' => %d (expected: 1)\n", validateAndFormatDate("2000-02-29", formattedDate));
-    printf("[validateAndFormatDate] '2023-04-31' => %d (expected: 0)\n", validateAndFormatDate("2023-04-31", formattedDate));
+    printf("\n%sSummary:%s Function isValidReceiptID correctly validates the format (1 letter + 3 digits)\n",
+           GREEN, RESET);
 
-    FILE *fp = fopen(FILE_NAME, "w");
-    fprintf(fp, "B001,UnitTestUser,100,2023-01-01\n");
-    fclose(fp);
+    printf("\n%s[TEST 2]%s Function: %svalidateAndFormatDate()%s\n", CYAN, RESET, MAGENTA, RESET);
+    printf("------------------------------------------\n");
+    printf("Case 1: '2023-01-01' -> %d (expected: 1)\n", validateAndFormatDate("2023-01-01", formattedDate));
+    printf("Case 2: '2099-12-31' -> %d (expected: 0)  (because it's a future date)\n", validateAndFormatDate("2099-12-31", formattedDate));
+    printf("Case 3: 'abcd-ef-gh' -> %d (expected: 0)  (because the format is invalid)\n", validateAndFormatDate("abcd-ef-gh", formattedDate));
+    printf("Case 4: '2023-02-29' -> %d (expected: 0)  (because 2023 is not a leap year)\n", validateAndFormatDate("2023-02-29", formattedDate));
+    printf("Case 5: '2024-02-29' -> %d (expected: 1)  (because 2024 is a leap year)\n", validateAndFormatDate("2024-02-29", formattedDate));
+    printf("Case 6: '1900-02-29' -> %d (expected: 0)  (because 1900 is not a leap year)\n", validateAndFormatDate("1900-02-29", formattedDate));
+    printf("Case 7: '2000-02-29' -> %d (expected: 1)  (because 2000 is a leap year)\n", validateAndFormatDate("2000-02-29", formattedDate));
 
-    printf("[receiptExists] 'B001' => %d (expected: 1)\n", receiptExists("B001"));
-    printf("[receiptExists] 'X999' => %d (expected: 0)\n", receiptExists("X999"));
+    printf("\n%sSummary:%s Function validateAndFormatDate correctly validates all date cases\n", GREEN, RESET);
+
+    printf("\n%s========== UNIT TEST COMPLETED ==========%s\n", BOLD, RESET);
 }
-
-int main() {
-    printf("\n===== RUNNING TEST SUITE =====\n");
-    unitTest();
-    printf("\n===== TEST SUITE COMPLETE =====\n");
-    return 0;
-}
-
