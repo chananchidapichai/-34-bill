@@ -10,6 +10,7 @@
 #define YELLOW  "\033[33m"
 #define CYAN    "\033[36m"
 #define MAGENTA "\033[35m"
+#define RED     "\033[31m"
 
 #define FILE_NAME "bill.csv"
 #define MAX_BILLS 1000
@@ -388,58 +389,110 @@ void unitTest() {
 }
 
 void e2eTest() {
-    printf("\n==== E2E TEST ====\n");
+    printf("\n%s========== END-TO-END TEST ==========%s\n", BOLD, RESET);
 
+    printf("\n%s[STEP 0]%s Clearing data file: %s\n", CYAN, RESET, FILE_NAME);
     FILE *fp = fopen(FILE_NAME, "w");
+    if (fp == NULL) {
+        printf("%s[ERROR]%s Could not open file '%s' for writing. Aborting test.\n", RED, RESET, FILE_NAME);
+        return;
+    }
     fclose(fp);
+    printf("  %s[OK]%s Cleared the file successfully.\n", GREEN, RESET);
 
-    printf("Adding bill A100...\n");
+    printf("\n%s[STEP 1]%s Adding new bill 'A001' (A001,TestUser,500,2023-01-01)\n", CYAN, RESET);
     fp = fopen(FILE_NAME, "a");
-    fprintf(fp, "A100,E2ETestUser,200,2023-01-01\n");
+    if (fp == NULL) {
+        printf("%s[FAIL]%s Could not open '%s' for appending.\n", RED, RESET, FILE_NAME);
+        return;
+    }
+    fprintf(fp, "A001,TestUser,500,2023-01-01\n");
     fclose(fp);
+    printf("  %s[PASS]%s Added record: A001, TestUser, 500, 2023-01-01\n", GREEN, RESET);
 
-    if (receiptExists("A100"))
-        printf("PASS: Bill A100 added.\n");
-    else
-        printf("FAIL: Bill A100 not found.\n");
+    printf("\n%s[STEP 2]%s Verifying that A001 exists in the file\n", CYAN, RESET);
+    if (receiptExists("A001")) {
+        printf("  %s[PASS]%s Bill A001 exists in file (expected).\n", GREEN, RESET);
+    } else {
+        printf("  %s[FAIL]%s Bill A001 NOT found (expected present). Check file write or receiptExists implementation.\n", RED, RESET);
+    }
 
-    printf("Showing all bills:\n");
+    printf("\n%s[STEP 3]%s Showing current bills (output from showBills):\n", CYAN, RESET);
     showBills();
+    printf("  %s[INFO]%s Above output should include the A001 record.\n", YELLOW, RESET);
 
-    printf("Updating bill A100...\n");
+    printf("\n%s[STEP 4]%s Updating A001 -> Customer: 'UpdatedUser', Amount: 999, Date: '2023-02-02'\n", CYAN, RESET);
     Bill bills[MAX_BILLS];
     int count = readAllBills(bills, MAX_BILLS);
+    int updated = 0;
     for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
+        if (strcmp(bills[i].ReceiptID, "A001") == 0) {
             strcpy(bills[i].CustomerName, "UpdatedUser");
             bills[i].Amount = 999;
             strcpy(bills[i].Date, "2023-02-02");
+            updated = 1;
             break;
         }
     }
-    writeAllBills(bills, count);
+    if (updated) {
+        writeAllBills(bills, count);
+        printf("  %s[PASS]%s Updated A001 in memory and wrote changes to file.\n", GREEN, RESET);
+    } else {
+        printf("  %s[FAIL]%s A001 not found in readAllBills result. No update performed.\n", RED, RESET);
+    }
 
-    printf("Showing bills after update:\n");
-    showBills();
-
-    printf("Deleting bill A100...\n");
+    printf("\n%s[STEP 5]%s Verifying updated values for A001\n", CYAN, RESET);
     count = readAllBills(bills, MAX_BILLS);
+    int found = 0;
     for (int i = 0; i < count; i++) {
-        if (strcmp(bills[i].ReceiptID, "A100") == 0) {
+        if (strcmp(bills[i].ReceiptID, "A001") == 0) {
+            found = 1;
+            if (strcmp(bills[i].CustomerName, "UpdatedUser") == 0 &&
+                bills[i].Amount == 999 &&
+                strcmp(bills[i].Date, "2023-02-02") == 0) {
+                printf("  %s[PASS]%s A001 updated correctly (Customer: %s, Amount: %d, Date: %s)\n",
+                       GREEN, RESET, bills[i].CustomerName, bills[i].Amount, bills[i].Date);
+            } else {
+                printf("  %s[FAIL]%s A001 found but values differ. Actual -> Customer: '%s', Amount: %d, Date: '%s'\n",
+                       RED, RESET, bills[i].CustomerName, bills[i].Amount, bills[i].Date);
+            }
+            break;
+        }
+    }
+    if (!found) {
+        printf("  %s[FAIL]%s A001 not found during update verification. Check writeAllBills/readAllBills.\n", RED, RESET);
+    }
+
+    printf("\n%s[STEP 6]%s Deleting A001\n", CYAN, RESET);
+    count = readAllBills(bills, MAX_BILLS);
+    int deleted = 0;
+    for (int i = 0; i < count; i++) {
+        if (strcmp(bills[i].ReceiptID, "A001") == 0) {
             for (int j = i; j < count - 1; j++)
                 bills[j] = bills[j + 1];
             count--;
             writeAllBills(bills, count);
+            deleted = 1;
             break;
         }
     }
+    if (deleted) {
+        printf("  %s[PASS]%s Deleted A001 and wrote changes to file.\n", GREEN, RESET);
+    } else {
+        printf("  %s[FAIL]%s Could not find A001 to delete. No changes made.\n", RED, RESET);
+    }
 
-    if (!receiptExists("A100"))
-        printf("PASS: Bill A100 deleted.\n");
-    else
-        printf("FAIL: Bill A100 still exists.\n");
+    printf("\n%s[STEP 7]%s Verifying that A001 is no longer present\n", CYAN, RESET);
+    if (!receiptExists("A001")) {
+        printf("  %s[PASS]%s Bill A001 deleted correctly (not found in file).\n", GREEN, RESET);
+    } else {
+        printf("  %s[FAIL]%s Bill A001 still exists (expected deleted). Check delete logic or writeAllBills.\n", RED, RESET);
+    }
 
+    printf("\n%s[FINAL]%s Remaining bills (output from showBills):\n", MAGENTA, RESET);
     showBills();
+
+    printf("\n%s========== END-TO-END TEST COMPLETED ==========%s\n", BOLD, RESET);
 }
 
 void displayMenu() {
