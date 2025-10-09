@@ -13,7 +13,6 @@ typedef struct {
     char Date[20];
 } Bill;
 
-// ฟังก์ชันระบบ
 int isValidReceiptID(const char *id) {
     if (strlen(id) != 4) return 0;
     if (!isalpha(id[0])) return 0;
@@ -153,3 +152,4 @@ int main() {
     printf("\n===== TEST SUITE COMPLETE =====\n");
     return 0;
 }
+
