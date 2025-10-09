@@ -101,15 +101,7 @@ void showBills() {
 }
 void e2eTest() {
     printf("\n%s========== END-TO-END TEST ==========%s\n", BOLD, RESET);
-
-    printf("\n%s[STEP 0]%s Clearing data file: %s\n", CYAN, RESET, FILE_NAME);
-    FILE *fp = fopen(FILE_NAME, "w");
-    if (fp == NULL) {
-        printf("%s[ERROR]%s Could not open file '%s' for writing. Aborting test.\n", RED, RESET, FILE_NAME);
-        return;
-    }
-    fclose(fp);
-    printf("  %s[OK]%s Cleared the file successfully.\n", GREEN, RESET);
+    FILE *fp;
 
     printf("\n%s[STEP 1]%s Adding new bill 'A001' (A001,TestUser,500,2023-01-01)\n", CYAN, RESET);
     fp = fopen(FILE_NAME, "a");
